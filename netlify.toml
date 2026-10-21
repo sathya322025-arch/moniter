@@ -10,3 +10,4 @@
   from = "/enroll"
   to = "/enroll.html"
   status = 200
+
