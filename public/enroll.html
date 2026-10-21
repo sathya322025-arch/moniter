@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Device Enrollment & Management Policy</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px;">
+
+  <main class="page-container" style="max-width: 580px;">
+    
+    <div class="login-card" style="padding: 36px 30px; border-radius: 24px;">
+      
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+        <span class="shield-badge">🛡️ DEVICE MANAGEMENT ENROLLMENT</span>
+        <span id="tokenStatusBadge" class="badge-status badge-success">Valid Token</span>
+      </div>
+
+      <h1 class="modal-title" style="font-size: 1.8rem; margin-bottom: 6px;">Enroll Managed Device</h1>
+      <p class="modal-subtitle" style="margin-bottom: 20px;">
+        Authorize this device for automatic connection and remote management under your organization's device policy.
+      </p>
+
+      <!-- Token Verification Box -->
+      <div id="enrollAlert" class="alert-box hidden"></div>
+
+      <!-- Device Enrollment Form -->
+      <form id="enrollmentForm" class="auth-form" style="margin-top: 10px;">
+        
+        <div class="form-group">
+          <label for="deviceHostname">Device Hostname / Assigned Identifier</label>
+          <input 
+            type="text" 
+            id="deviceHostname" 
+            required 
+            placeholder="e.g. MK-Laptop-01 or Admin-Mobile"
+            autocapitalize="none"
+            spellcheck="false"
+          />
+          <small style="color: var(--text-muted); font-size: 0.75rem;">
+            A descriptive name to identify this device in the centralized admin console.
+          </small>
+        </div>
+
+        <!-- Organization Policy Agreement Card -->
+        <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin: 16px 0;">
+          <h4 style="font-size: 0.92rem; font-weight: 700; color: #60A5FA; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+            <span>📜</span> Organization Monitoring & Device Policy
+          </h4>
+          <ul style="font-size: 0.8rem; color: #CBD5E1; line-height: 1.6; padding-left: 20px; display: flex; flex-direction: column; gap: 6px;">
+            <li><strong>Automatic Reconnection:</strong> This device will automatically register its connection status, IP address, and OS without requiring repeated approval on routine reconnects.</li>
+            <li><strong>Remote Screen Assistance:</strong> Authorized administrators with the ADMIN role may initiate remote screen viewing directly under organization policy.</li>
+            <li><strong>Visible Session Indicators:</strong> A prominent indicator is displayed on this device during any active screen viewing session, along with a Stop Sharing control.</li>
+            <li><strong>Zero Covert Access:</strong> Secret monitoring, camera, microphone, and private file access are strictly prohibited.</li>
+            <li><strong>Revocation:</strong> Enrollment can be revoked by the administrator or via this device at any time.</li>
+          </ul>
+        </div>
+
+        <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 20px;">
+          <input type="checkbox" id="chkAgreePolicy" required style="margin-top: 4px; cursor: pointer; width: 18px; height: 18px;">
+          <label for="chkAgreePolicy" style="font-size: 0.82rem; color: #E2E8F0; cursor: pointer; line-height: 1.4;">
+            I approve enrollment of this device and agree to the organization's automated management and remote assistance policy.
+          </label>
+        </div>
+
+        <button type="submit" id="btnApproveEnrollment" class="btn-submit" style="background: var(--success); font-weight: 800; font-size: 1.05rem;">
+          <span class="btn-text">Approve & Enroll Managed Device</span>
+        </button>
+
+      </form>
+
+      <div style="text-align: center; margin-top: 20px;">
+        <a href="/" style="color: var(--text-muted); font-size: 0.82rem; text-decoration: none;">Return to Home</a>
+      </div>
+
+    </div>
+
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
+      const alertBox = document.getElementById('enrollAlert');
+      const form = document.getElementById('enrollmentForm');
+      const hostnameInput = document.getElementById('deviceHostname');
+      const badge = document.getElementById('tokenStatusBadge');
+
+      // Pre-fill suggested hostname
+      const isMobile = /Mobi|Android|iPhone/i.test(navigator.userAgent);
+      const defaultHost = (isMobile ? 'Mobile-' : 'Laptop-') + Math.random().toString(36).substring(2, 6).toUpperCase();
+      hostnameInput.value = defaultHost;
+
+      if (!token) {
+        alertBox.className = 'alert-box alert-danger';
+        alertBox.textContent = '❌ Missing enrollment token in link. Please obtain a valid link from your administrator.';
+        alertBox.classList.remove('hidden');
+        badge.className = 'badge-status badge-failed';
+        badge.textContent = 'Missing Token';
+        form.style.display = 'none';
+        return;
+      }
+
+      // Verify token with server
+      try {
+        const res = await fetch(`/api/enroll/verify?token=${encodeURIComponent(token)}`);
+        const data = await res.json();
+        if (!res.ok) {
+          alertBox.className = 'alert-box alert-danger';
+          alertBox.textContent = `❌ ${data.error || 'Invalid or expired enrollment token.'}`;
+          alertBox.classList.remove('hidden');
+          badge.className = 'badge-status badge-failed';
+          badge.textContent = 'Invalid / Expired';
+          form.style.display = 'none';
+        }
+      } catch (e) {
+        alertBox.className = 'alert-box alert-danger';
+        alertBox.textContent = '❌ Failed to reach server to verify enrollment token.';
+        alertBox.classList.remove('hidden');
+      }
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const hostname = hostnameInput.value.trim();
+        const agreed = document.getElementById('chkAgreePolicy').checked;
+
+        if (!hostname || !agreed) return;
+
+        const btn = document.getElementById('btnApproveEnrollment');
+        btn.disabled = true;
+        btn.querySelector('.btn-text').textContent = 'Enrolling Device...';
+
+        try {
+          const res = await fetch('/api/enroll/approve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              token,
+              hostname,
+              telemetry: {
+                screen_res: `${window.screen.width}x${window.screen.height}`,
+                touch: ('ontouchstart' in window) || (navigator.maxTouchPoints > 0)
+              }
+            })
+          });
+
+          const data = await res.json();
+
+          if (res.ok) {
+            // Save persistent device certificate in localStorage
+            localStorage.setItem('managed_device_id', data.device_id);
+            localStorage.setItem('managed_device_token', data.device_auth_token);
+            localStorage.setItem('managed_hostname', data.hostname);
+            localStorage.setItem('is_managed_device', 'true');
+
+            alertBox.className = 'alert-box alert-warning';
+            alertBox.style.background = 'rgba(16, 185, 129, 0.2)';
+            alertBox.style.color = '#34D399';
+            alertBox.innerHTML = `
+              <strong>🎉 Device Successfully Enrolled!</strong><br>
+              This device is now registered as <strong>${data.hostname}</strong>. Routine connections will reconnect automatically without prompts.
+            `;
+            alertBox.classList.remove('hidden');
+            form.style.display = 'none';
+            badge.textContent = 'Enrolled';
+
+            setTimeout(() => {
+              window.location.href = '/?managed=active';
+            }, 2500);
+
+          } else {
+            alertBox.className = 'alert-box alert-danger';
+            alertBox.textContent = `❌ Enrollment failed: ${data.error || 'Server error'}`;
+            alertBox.classList.remove('hidden');
+            btn.disabled = false;
+            btn.querySelector('.btn-text').textContent = 'Approve & Enroll Managed Device';
+          }
+
+        } catch (err) {
+          alertBox.className = 'alert-box alert-danger';
+          alertBox.textContent = '❌ Network error during device enrollment.';
+          alertBox.classList.remove('hidden');
+          btn.disabled = false;
+          btn.querySelector('.btn-text').textContent = 'Approve & Enroll Managed Device';
+        }
+      });
+    });
+  </script>
+</body>
+</html>
+

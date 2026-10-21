@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Welcome 😊</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Persistent User Sharing Notification Banner -->
+  <div id="userSharingBanner" class="user-sharing-banner hidden">
+    <div class="banner-content">
+      <span class="live-dot"></span>
+      <span id="userBannerText" class="banner-text">🔴 Managed Remote Assist Active - Under Org Policy</span>
+      <button id="btnUserStopSharing" class="btn-stop-mini" type="button">Stop Sharing</button>
+    </div>
+  </div>
+
+  <main class="page-container">
+
+    <!-- 1. INITIAL PUBLIC INTERFACE: SMILEY EMOJI WITH YES AND NO BUTTONS -->
+    <div id="smileyCard" class="smiley-card">
+      
+      <!-- Interactive Smiley Emoji (Hidden entrance to Admin Login) -->
+      <button 
+        id="btnSmiley" 
+        class="smiley-btn" 
+        type="button" 
+        aria-label="Interactive Smiley Emoji" 
+        title="😊"
+      >
+        <span class="emoji-glyph">😊</span>
+      </button>
+
+      <!-- Harmless Friendly Question -->
+      <h1 class="smiley-title">Having a great day?</h1>
+
+      <!-- Harmless Response Area (Updates when Yes/No clicked) -->
+      <div id="friendlyMessageArea" class="friendly-message hidden">
+        <p id="friendlyMessageText"></p>
+        <button id="btnResetSmiley" class="btn-text-sm" type="button">Reset</button>
+      </div>
+
+      <!-- Yes and No Buttons -->
+      <div id="choiceButtonsRow" class="choice-row">
+        <button id="btnYes" class="btn-action btn-yes" type="button">Yes</button>
+        <button id="btnNo" class="btn-action btn-no" type="button">No</button>
+      </div>
+
+      <!-- Transparent Connection Privacy Notice -->
+      <div class="visitor-privacy-notice" style="margin-top: 24px; font-size: 0.72rem; color: var(--text-muted); line-height: 1.4; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 14px; text-align: center;">
+        🔒 <strong>Connection Notice:</strong> Basic connection telemetry (device category, OS, browser, and IP) is automatically logged for server monitoring. No passwords or private files are accessed.
+      </div>
+
+    </div>
+
+    <!-- 2. CONSENT-BASED SCREEN VIEW REQUEST DIALOG (Triggered when Admin requests screen) -->
+    <div id="consentModal" class="login-modal-overlay hidden" role="dialog" aria-modal="true">
+      <div class="login-card consent-card">
+        <div class="consent-icon">📺</div>
+        <h2 class="modal-title">Screen View Request</h2>
+        <p id="consentPromptText" class="consent-desc">
+          Administrator <strong id="reqAdminName">admin</strong> is requesting permission to view your screen for assistance.
+        </p>
+
+        <div class="privacy-notice-box">
+          🛡️ <strong>Informed Consent:</strong> Screen sharing requires your explicit approval and will prompt you to select which window or tab to share. You can end the session at any time.
+        </div>
+
+        <div class="choice-row" style="margin-top: 18px; margin-bottom: 0;">
+          <button id="btnAcceptScreenShare" class="btn-action btn-yes" type="button">Accept & Share</button>
+          <button id="btnDeclineScreenShare" class="btn-action btn-no" type="button">Decline</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. ADMIN LOGIN MODAL (Appears ONLY when 😊 is clicked/tapped) -->
+    <div id="loginModal" class="login-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="login-card">
+        
+        <div class="modal-header">
+          <div class="shield-badge">🛡️ ADMIN PORTAL</div>
+          <button id="btnCloseModal" class="btn-close" aria-label="Close Login">&times;</button>
+        </div>
+
+        <h2 id="modalTitle" class="modal-title">Admin Authentication</h2>
+        <p class="modal-subtitle">Authorized administrator credentials required</p>
+
+        <!-- Status & Rate Limit Alert Messages -->
+        <div id="statusMessage" class="alert-box hidden"></div>
+
+        <!-- Admin Login Form -->
+        <form id="adminLoginForm" class="auth-form" autocomplete="off">
+          <div class="form-group">
+            <label for="username">Admin Username</label>
+            <input 
+              type="text" 
+              id="username" 
+              name="username" 
+              required 
+              placeholder="Enter username" 
+              autocapitalize="none" 
+              autocorrect="off"
+              spellcheck="false"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="password">Admin Password</label>
+            <input 
+              type="password" 
+              id="password" 
+              name="password" 
+              required 
+              placeholder="Enter password"
+            />
+          </div>
+
+          <button type="submit" id="btnLogin" class="btn-submit">
+            <span class="btn-text">Sign In as Admin</span>
+          </button>
+        </form>
+
+        <!-- Test credentials helper for verification -->
+        <div class="demo-box">
+          <p class="demo-caption">🔑 Test Credentials:</p>
+          <div class="demo-btns">
+            <button type="button" class="btn-demo" onclick="fillCredentials('admin', 'qwertyuiolkjhgfdsxcv')">
+              Admin (Allowed)
+            </button>
+            <button type="button" class="btn-demo" onclick="fillCredentials('guest_user', 'UserPassword123!')">
+              User (Denied)
+            </button>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          🔒 Protected by server-side PBKDF2 hashing, SQLite audit logging, and rate limiting.
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>
